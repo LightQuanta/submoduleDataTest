@@ -17,7 +17,7 @@ jobs:
       - name: Compress dist directory
         uses: montudor/action-zip@v0.1.1
         with:
-          args: -r -j dist.zip ./web/dist
+          args: ./web/dist dist.zip
         
       - name: Create Release
         id: create_release
