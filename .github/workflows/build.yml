@@ -1,0 +1,42 @@
+name: submodule build test
+
+on:
+  workflow_dispatch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+            submodules: 'true'
+      - name: setup bun
+        uses: oven-sh/setup-bun@v1
+      - name: build
+        run: rm -rf ./web/data/* && cp data.json ./web/data && cd web && bun i && bun run build
+      - name: Compress dist directory
+        uses: montudor/action-zip@v0.1.1
+        with:
+          args: -r -j dist.zip ./web/dist
+        
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.sha }}
+          release_name: Release ${{ github.sha }}
+          draft: false
+          prerelease: false
+          
+      - name: Upload Release Asset
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist.zip
+          asset_name: dist.zip
+          asset_content_type: application/zip
